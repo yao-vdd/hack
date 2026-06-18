@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>NEXUS-CORE :: Secure Access Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Fundo Matrix (canvas) -->
+  <canvas id="matrix-canvas"></canvas>
+
+  <!-- Trilha neon do cursor -->
+  <canvas id="cursor-canvas"></canvas>
+
+  <!-- Vinheta + scanlines de CRT -->
+  <div class="crt-overlay"></div>
+  <div class="vignette"></div>
+
+  <!-- ======================= BOOT SEQUENCE ======================= -->
+  <div id="boot-screen" class="boot-screen">
+    <div class="boot-inner">
+      <pre id="boot-log" class="boot-log"></pre>
+      <div class="boot-cursor-line"><span class="prompt-arrow">&gt;</span><span class="blink-cursor">_</span></div>
+    </div>
+  </div>
+
+  <!-- ======================= APP PRINCIPAL ======================= -->
+  <main id="app" class="app hidden">
+
+    <div class="terminal-window">
+
+      <!-- Barra de título -->
+      <div class="title-bar">
+        <div class="title-bar-left">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-yellow"></span>
+          <span class="dot dot-green"></span>
+        </div>
+        <div class="title-bar-center">
+          <span class="title-path">root@nexus-core</span><span class="title-sep">:</span><span class="title-path-2">~/secure_login</span>
+          <span class="title-status">● LIVE</span>
+        </div>
+        <div class="title-bar-right">
+          <span id="clock">00:00:00</span>
+        </div>
+      </div>
+
+      <div class="body-grid">
+
+        <!-- ============ PAINEL ESQUERDO: SCANNER / HUD ============ -->
+        <aside class="hud-panel glass">
+          <h2 class="hud-title"><span class="bracket">[</span> THREAT ANALYSIS <span class="bracket">]</span></h2>
+
+          <div class="radar-wrap">
+            <svg class="radar" viewBox="0 0 200 200">
+              <circle class="radar-ring" cx="100" cy="100" r="90"></circle>
+              <circle class="radar-ring" cx="100" cy="100" r="62"></circle>
+              <circle class="radar-ring" cx="100" cy="100" r="34"></circle>
+              <line class="radar-cross" x1="100" y1="10" x2="100" y2="190"></line>
+              <line class="radar-cross" x1="10" y1="100" x2="190" y2="100"></line>
+              <g id="radar-blips"></g>
+              <g class="radar-sweep-group">
+                <path class="radar-sweep" d="M100,100 L100,10 A90,90 0 0,1 168,46 Z"></path>
+              </g>
+              <circle class="radar-core" cx="100" cy="100" r="4"></circle>
+            </svg>
+            <span class="radar-label">SCANNING PERIMETER</span>
+          </div>
+
+          <div class="stat-list">
+            <div class="stat-row">
+              <span class="stat-name">CPU LOAD</span>
+              <div class="stat-bar"><div id="bar-cpu" class="stat-fill"></div></div>
+              <span id="val-cpu" class="stat-val">00%</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-name">NET TRAFFIC</span>
+              <div class="stat-bar"><div id="bar-net" class="stat-fill"></div></div>
+              <span id="val-net" class="stat-val">00%</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-name">ENCRYPTION</span>
+              <div class="stat-bar"><div id="bar-enc" class="stat-fill stat-fill-cyan"></div></div>
+              <span id="val-enc" class="stat-val">00%</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-name">THREAT LVL</span>
+              <div class="stat-bar"><div id="bar-threat" class="stat-fill stat-fill-red"></div></div>
+              <span id="val-threat" class="stat-val">LOW</span>
+            </div>
+          </div>
+
+          <div class="hud-footer">
+            <span id="ip-addr">IP 192.168.0.1</span>
+            <span id="node-id">NODE #A7F3</span>
+          </div>
+        </aside>
+
+        <!-- ============ PAINEL DIREITO: LOGIN ============ -->
+        <section class="login-panel glass">
+
+          <div class="login-head">
+            <span class="login-icon">⛨</span>
+            <h1 class="login-title">SYSTEM ACCESS</h1>
+            <p class="login-sub">AUTHORIZATION REQUIRED // NEXUS-CORE v4.2.1</p>
+          </div>
+
+          <form id="login-form" autocomplete="off">
+
+            <div class="field">
+              <label for="username">USERNAME</label>
+              <div class="input-wrap">
+                <span class="input-icon">▸</span>
+                <input type="text" id="username" placeholder="enter identifier" autocomplete="off" spellcheck="false">
+                <span class="input-line"></span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="password">PASSWORD</label>
+              <div class="input-wrap">
+                <span class="input-icon">▸</span>
+                <input type="password" id="password" placeholder="enter passphrase" autocomplete="off" spellcheck="false">
+                <span class="input-line"></span>
+              </div>
+              <div id="encryption-strip" class="encryption-strip"></div>
+            </div>
+
+            <button type="submit" id="access-btn" class="access-btn">
+              <span id="access-btn-text">ACCESS SYSTEM</span>
+              <span class="access-btn-glow"></span>
+            </button>
+
+            <div id="progress-wrap" class="progress-wrap">
+              <div class="progress-track">
+                <div id="progress-fill" class="progress-fill"></div>
+              </div>
+              <div class="progress-meta">
+                <span id="progress-stage">Standby</span>
+                <span id="progress-pct">0%</span>
+              </div>
+            </div>
+
+          </form>
+        </section>
+
+        <!-- ============ LOG TERMINAL ============ -->
+        <section class="log-panel glass">
+          <div class="log-header">
+            <span>// LIVE_SYSTEM_LOG</span>
+            <span class="log-rec">● REC</span>
+          </div>
+          <div id="log-output" class="log-output"></div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ======================= TELA FINAL ======================= -->
+  <div id="final-screen" class="final-screen">
+    <canvas id="particle-canvas"></canvas>
+    <div class="final-content">
+      <h1 id="glitch-text-1" class="glitch-text" data-text="ACCESS GRANTED">ACCESS GRANTED</h1>
+      <h2 id="glitch-text-2" class="glitch-subtext" data-text="WELCOME ADMIN">WELCOME ADMIN</h2>
+      <p class="final-meta">SESSION TOKEN <span id="session-token">0x0000000000</span></p>
+      <button id="restart-btn" class="restart-btn">[ ENTER ] RESTART DEMO</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
